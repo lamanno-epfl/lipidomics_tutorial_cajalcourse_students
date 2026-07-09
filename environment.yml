@@ -1,0 +1,52 @@
+# CPU-only project environment for the course (no GPU anywhere). One command gives a COMPLETE
+# env that runs every notebook (verified by re-executing all 12 in this env):
+#     mamba env create -f environment.yml
+#     mamba activate cajal-lipidomics
+#     pip install -e .            # the course helper package (cajal_lipidomics)
+#     python -m ipykernel install --user --name cajal-lipidomics --display-name "cajal-lipidomics"
+#
+# Notebook 3 (uMAIA) uses a SEPARATE env, environment-umaia.yml (older jax/numpyro stack).
+# You only need to clone EUCLID for the one illustrative "production clustering" cell in NB6
+# (git clone https://github.com/lamanno-epfl/EUCLID && pip install -e EUCLID); the transparent
+# notebooks do not import it.
+name: cajal-lipidomics
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - git
+  - jupyterlab
+  - ipykernel
+  - ipywidgets
+  - nbformat
+  # scientific stack (everything the notebooks import).
+  # These are CAPPED on purpose. Left unpinned, a 2026 conda-forge solve pulls
+  # numpy 2.4 / pandas 3.0, then — unable to satisfy a recent scanpy against those —
+  # backtracks scanpy to 1.4.4 (2019) and anndata to 0.6.x, which crash on import
+  # (`from pandas.core.index import RangeIndex`). The caps below pin the same
+  # known-good modern stack as environment-umaia.yml and keep scanpy/anndata current.
+  - "numpy<2"
+  - "scipy<1.13"
+  - "pandas<2.2"
+  - scikit-learn
+  - matplotlib
+  - seaborn
+  - statsmodels
+  - "anndata>=0.10"
+  - "scanpy>=1.10"
+  # harmonypy is NOT on conda-forge (only bioconda) -> installed via pip in requirements-extra.txt
+  # so a clean Miniforge (conda-forge only) can build this env without adding the bioconda channel.
+  - leidenalg
+  - python-igraph
+  - openTSNE
+  - umap-learn
+  - xgboost
+  - numba
+  - pyarrow            # pandas parquet engine (NB1/NB8/NB9 + the data bundle ship .parquet)
+  - zarr
+  - rdkit
+  - adjusttext
+  - tqdm
+  - pip:
+      - -r requirements-extra.txt

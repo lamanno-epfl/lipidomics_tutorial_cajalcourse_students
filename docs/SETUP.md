@@ -1,0 +1,130 @@
+# Setup guide — get your laptop ready before the course
+
+Do this at home, with time to spare. None of it needs prior programming. Each step ends with a
+check: if you see the expected output, move on; if not, ask Claude, then write to **luca.fusarbassini@epfl.ch** with
+the error.
+
+> **On Windows? Use WSL2.** One step of the course — notebook 3's uMAIA normalization — needs JAX,
+> and conda cannot install JAX on native Windows (there is no Windows build of `jaxlib`). The clean
+> fix is **WSL2**: a real Ubuntu Linux that runs inside Windows, where every command in this guide
+> works exactly as written for Mac and Linux. Set it up once, then do the *whole* guide inside it:
+>
+> 1. Open **PowerShell as Administrator**, run `wsl --install`, and reboot. (Installs WSL2 + Ubuntu.)
+> 2. Launch **Ubuntu** from the Start menu and pick a username and password. That window is your terminal.
+> 3. Keep the course under your Linux home (run `cd ~` first), not under `/mnt/c/...` — it is much faster.
+> 4. For VS Code (step 4), install the **WSL** extension, then from the Ubuntu terminal run `code .`
+>    in the course folder; VS Code reopens "connected to WSL" and sees the `cajal-lipidomics` kernel.
+>
+> From here on, Windows + WSL2 users follow the **macOS / Linux** instructions everywhere.
+---
+
+## 1. A terminal
+
+The terminal is a text window where you type commands. You already have one.
+
+- **macOS**: open Spotlight (`Cmd`+`Space`), type `Terminal`, press Enter.
+- **Windows**: use **WSL2** (see the box above), then open the **Ubuntu** terminal and follow the
+  macOS / Linux commands throughout. Native Git Bash / PowerShell will not run notebook 3, so we
+  only support the WSL2 path.
+- **Linux**: open your Terminal app.
+
+**Check**: type `pwd` and press Enter. It prints the folder you are in.
+
+## 2. Miniforge (Python + the conda/mamba package manager)
+
+We use Miniforge: it is free, minimal, and installs scientific packages reliably. Do not install
+the full Anaconda.
+
+- Download the installer for your system from <https://github.com/conda-forge/miniforge>.
+  - macOS / Linux: download the `.sh`, then run `bash Miniforge3-*.sh` and accept the defaults.
+  - Windows (WSL2): inside the **Ubuntu** terminal, use the **Linux** `.sh` installer exactly as the
+    macOS / Linux line above — not the Windows `.exe`.
+- Close and reopen the terminal.
+
+**Check**: `mamba --version` prints a version number.
+
+## 3. Get the course and create the environment
+
+```bash
+git clone git@github.com:lamanno-epfl/lipidomics_tutorial_cajalcourse_students.git
+cd lipidomics_tutorial_cajalcourse_students
+
+# 1) the main analysis environment
+mamba env create -f environment.yml
+mamba activate cajal-lipidomics
+pip install -e .                      # the cajal_lipidomics helper package the notebooks import
+pip install -r requirements-extra.txt
+python -m ipykernel install --user --name cajal-lipidomics --display-name "cajal-lipidomics"
+mamba deactivate
+
+# 2) the normalization environment (notebook 3 only: uMAIA needs numpy<2 + jax)
+mamba env create -f environment-umaia.yml
+mamba activate cajal-umaia
+pip install -e . --no-deps                              # the cajal_lipidomics helper (NB3 imports it)
+git clone https://github.com/lamanno-epfl/uMAIA.git external/uMAIA
+pip install -e external/uMAIA --no-deps                 # uMAIA itself (kept off the pinned stack)
+python -m ipykernel install --user --name cajal-umaia --display-name "cajal-umaia"
+mamba deactivate
+```
+
+Most notebooks use the **cajal-lipidomics** kernel; **notebook 3** (uMAIA normalization) uses the
+**cajal-umaia** kernel. EUCLID is not installed here: notebook 6 clones and runs it at that point.
+
+**Check**: with `cajal-lipidomics` active, `python -c "import scanpy, anndata, xgboost, cajal_lipidomics; print('ok')"` prints `ok`.
+And with `cajal-umaia` active, `python -c "import uMAIA, cajal_lipidomics; print('ok')"` prints `ok`.
+
+(Later, during the course, you will refresh the notebooks with `git pull`.)
+
+## 3b. Get the data bundle
+
+The provided inputs (registration, references, masks, MERFISH, Gene Ontology) live in one
+~1 GB bundle on Zenodo. With `cajal-lipidomics` active, from the repo root:
+
+```bash
+python scripts/fetch_data_bundle.py    # downloads + unzips into data/
+```
+
+You pull the raw MALDI-MSI yourself from METASPACE in notebook 1, and build `data/derived/`
+by running notebooks 1-6 in order.
+
+
+## 4. VS Code and Jupyter
+
+- Install [VS Code](https://code.visualstudio.com/).
+- In VS Code, open the Extensions panel and install **Python** and **Jupyter** (both by Microsoft).
+- Open the course folder: `File > Open Folder...` and choose `lipidomics_tutorial_cajalcourse_students`.
+- Open `notebooks/00_intro/00_tooling.ipynb`.
+- **Select the kernel**: top right of the notebook, click the kernel picker and choose
+  **cajal-lipidomics**. The picker shows two groups — registered "Jupyter Kernels" and raw
+  "Python Environments". Pick the one named **cajal-lipidomics** (Python 3.11), **not** `base`.
+
+**Check**: run the first cell with `Shift`+`Enter`. It runs without an error.
+
+> **If you get `ModuleNotFoundError` (e.g. no `scanpy`/`seaborn`) the kernel is almost always
+> wrong, not the install.** The error traceback shows the Python that ran: a path under
+> `anaconda3/lib/python3.10/...` means you are on the **base** environment, not the course one
+> (which is `anaconda3/envs/cajal-lipidomics/.../python3.11`). VS Code's *Restart* only restarts
+> the kernel you already picked, so it keeps coming back — you must actively **re-pick**
+> cajal-lipidomics from the kernel picker. To confirm, run `import sys; print(sys.executable)`:
+> it must end in `envs/cajal-lipidomics/bin/python`.
+
+## 5. Claude Code
+
+We use Claude Code from the second half of the course. Quickstart:
+<https://code.claude.com/docs/en/quickstart>.
+
+- It needs a Claude login (we will sort access for the course).
+- You run `claude` in a terminal inside the course folder, or use the VS Code integration.
+- It can read your files, explain code, and propose edits, and it asks before changing anything.
+- Use it well: read what it writes. If you do not understand a line, stop and look it up. The point
+  is to learn, not to autocomplete past your understanding.
+
+## 6. A GitHub account
+
+Create a free account at <https://github.com>. You will use it to pull updates and, if you like, to
+save your own work.
+
+---
+
+You are ready when steps 3 and 4 both print `ok` and a notebook cell runs. Next, work through the
+three notebooks in `notebooks/00_intro/`.

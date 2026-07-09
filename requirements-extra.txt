@@ -1,0 +1,29 @@
+# pip-only extras on top of environment.yml's conda stack (things not reliably on conda-forge).
+# Keep compatible with the conda stack.
+
+# Hold the core numerical libs at the conda-solved, known-good versions. Several packages
+# below (metaspace2020, shap, ...) declare an UNPINNED numpy/pandas, and pip — run after the
+# conda solve — will otherwise eagerly upgrade numpy to 2.4 / pandas to 3.0, the exact drift
+# that used to silently break the env. These bounds are pip-visible, so they actually hold.
+numpy<2
+pandas<2.2
+scipy<1.13
+
+# Harmony batch integration (notebooks 5/6). Not on conda-forge (bioconda-only), so pip it here;
+# pure-Python, and its numpy/pandas/scikit-learn deps are already satisfied by the conda stack.
+harmonypy
+
+# pull MALDI-MSI data from METASPACE (notebook 1)
+metaspace2020==2.0.9
+
+# interpretable ML: per-feature attributions for the gene -> lipid-change models (notebook 8)
+shap
+
+# gene ontology enrichment to name predictive gene programs (notebook 8)
+goatools
+mygene
+
+# Allen Common Coordinate Framework atlas access (optional: notebook 4 teaches region transfer
+# from the provided coordinates; allensdk/brainglobe are only needed to derive them from scratch)
+# allensdk
+# brainglobe-atlasapi
